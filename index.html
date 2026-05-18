@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EchoLaunch — Generate your launch. Simulate your audience. Ship what lands.</title>
+  <meta name="description" content="EchoLaunch creates platform-specific marketing copy and tests it against a simulated audience persona — so you ship messaging that resonates, not guesses." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zinc: {
+              50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7', 300: '#d4d4d8',
+              400: '#a1a1aa', 500: '#71717a', 600: '#52525b', 700: '#3f3f46',
+              800: '#27272a', 900: '#18181b', 950: '#09090b'
+            },
+            emerald: {
+              300: '#6ee7b7', 400: '#34d399', 500: '#10b981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-zinc-950 to-zinc-900 text-white min-h-screen flex flex-col">
+  <nav class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto w-full">
+    <span class="text-xl font-bold tracking-tight">
+      Echo<span class="text-emerald-400">Launch</span>
+    </span>
+    <a href="/dashboard" class="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+      Open Dashboard
+    </a>
+  </nav>
+
+  <main class="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
+    <div class="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full border border-zinc-700 bg-zinc-800/50 text-xs text-zinc-400">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      Hackathon MVP
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight max-w-3xl leading-tight">
+      Generate your launch.
+      <span class="text-emerald-400">Simulate your audience.</span>
+      Ship what lands.
+    </h1>
+
+    <p class="mt-6 text-lg text-zinc-400 max-w-xl">
+      EchoLaunch creates platform-specific marketing copy and tests it
+      against a simulated audience persona — so you ship messaging that
+      resonates, not guesses.
+    </p>
+
+    <a href="/dashboard" class="mt-10 inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-base transition-colors">
+      Start Your Launch Kit
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14" />
+        <path d="m12 5 7 7-7 7" />
+      </svg>
+    </a>
+
+    <div class="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl w-full">
+      <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 text-left">
+        <div class="text-2xl mb-3">&#9889;</div>
+        <h3 class="font-semibold text-sm mb-1">4-Channel Generation</h3>
+        <p class="text-xs text-zinc-400">
+          LinkedIn, X, Product Hunt, and landing page copy — all from one input.
+        </p>
+      </div>
+      <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 text-left">
+        <div class="text-2xl mb-3">&#128101;</div>
+        <h3 class="font-semibold text-sm mb-1">Audience Twin</h3>
+        <p class="text-xs text-zinc-400">
+          Build a simulated persona from your ICP that scores and critiques every output.
+        </p>
+      </div>
+      <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 text-left">
+        <div class="text-2xl mb-3">&#127919;</div>
+        <h3 class="font-semibold text-sm mb-1">Ship What Lands</h3>
+        <p class="text-xs text-zinc-400">
+          Get objection-level feedback before posting — rewrite until it resonates.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="text-center text-xs text-zinc-600 py-6">
+    Built for the hackathon. Powered by AI.
+  </footer>
+</body>
+</html>

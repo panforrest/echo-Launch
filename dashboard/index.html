@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EchoLaunch — Launch Command Center</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zinc: {50:'#fafafa',100:'#f4f4f5',200:'#e4e4e7',300:'#d4d4d8',400:'#a1a1aa',500:'#71717a',600:'#52525b',700:'#3f3f46',800:'#27272a',900:'#18181b',950:'#09090b'},
+            emerald: {300:'#6ee7b7',400:'#34d399',500:'#10b981',900:'#064e3b'},
+            red: {400:'#f87171',800:'#991b1b',900:'#7f1d1d',950:'#450a0a'},
+            orange: {500:'#f97316'},
+            amber: {500:'#f59e0b'}
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen flex flex-col">
+  <header class="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+    <a href="/" class="text-lg font-bold tracking-tight">Echo<span class="text-emerald-400">Launch</span></a>
+    <span class="text-xs text-zinc-500">Launch Command Center</span>
+  </header>
+
+  <div class="flex-1 grid grid-cols-[320px_1fr_320px] gap-0 overflow-hidden" style="min-height:calc(100vh - 57px)">
+
+    <aside class="border-r border-zinc-800 p-5 overflow-y-auto">
+      <h2 class="text-sm font-semibold text-zinc-300 mb-4">Product Input</h2>
+      <form id="productForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Product URL <span class="text-zinc-600">(optional)</span></label>
+          <input id="url" type="text" placeholder="https://yourproduct.com" class="w-full px-3 py-2 text-sm rounded-md border border-zinc-700 bg-zinc-900 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Describe your product</label>
+          <textarea id="desc" rows="5" placeholder="What does your product do? Who is it for?" class="w-full px-3 py-2 text-sm rounded-md border border-zinc-700 bg-zinc-900 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"></textarea>
+        </div>
+        <button type="submit" id="submitBtn" disabled class="w-full py-2.5 text-sm font-semibold rounded-md bg-zinc-800 text-zinc-500 cursor-not-allowed transition-colors">Generate Launch Kit</button>
+      </form>
+      <div id="statusCard" class="mt-4 hidden"></div>
+    </aside>
+
+    <main class="flex flex-col overflow-hidden border-r border-zinc-800">
+      <div class="flex border-b border-zinc-800" id="tabs">
+        <button data-tab="linkedin" class="flex-1 py-3 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400 relative"><span class="flex items-center justify-center gap-1.5">LinkedIn <span class="tab-score text-[10px] text-zinc-500 hidden"></span></span></button>
+        <button data-tab="x" class="flex-1 py-3 text-sm font-medium text-zinc-500 hover:text-zinc-300 relative"><span class="flex items-center justify-center gap-1.5">X <span class="tab-score text-[10px] text-zinc-500 hidden"></span></span></button>
+        <button data-tab="product_hunt" class="flex-1 py-3 text-sm font-medium text-zinc-500 hover:text-zinc-300 relative"><span class="flex items-center justify-center gap-1.5">Product Hunt <span class="tab-score text-[10px] text-zinc-500 hidden"></span></span></button>
+        <button data-tab="landing" class="flex-1 py-3 text-sm font-medium text-zinc-500 hover:text-zinc-300 relative"><span class="flex items-center justify-center gap-1.5">Landing <span class="tab-score text-[10px] text-zinc-500 hidden"></span></span></button>
+      </div>
+      <div id="recBanner" class="hidden px-5 py-2 bg-emerald-950/30 border-b border-emerald-900/50 flex items-center gap-2">
+        <span class="text-[10px] bg-emerald-500 text-zinc-950 px-1.5 py-0.5 rounded font-bold">RECOMMENDED</span>
+        <span id="recText" class="text-xs text-emerald-300"></span>
+      </div>
+      <div class="flex-1 p-5 overflow-y-auto" id="contentArea">
+        <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6 min-h-[300px] flex flex-col items-center justify-center">
+          <div class="text-3xl mb-3 opacity-30">&#9998;</div>
+          <p class="text-sm text-zinc-500 text-center">LinkedIn copy will appear here</p>
+          <p class="text-xs text-zinc-600 mt-1">Enter your product details and generate</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-between px-5 py-3 border-t border-zinc-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-zinc-500">Score:</span>
+          <div class="w-32 h-2 rounded-full bg-zinc-800"><div id="scoreBar" class="h-2 rounded-full bg-emerald-500 transition-all duration-500" style="width:0%"></div></div>
+          <span id="scoreText" class="text-xs text-zinc-400">--</span>
+        </div>
+        <button id="exportBtn" disabled class="px-3 py-1.5 text-xs font-medium rounded-md bg-zinc-800 text-zinc-500 cursor-not-allowed transition-colors">Export All</button>
+        <button id="rewriteBtn" disabled class="px-4 py-1.5 text-xs font-medium rounded-md bg-zinc-800 text-zinc-500 cursor-not-allowed transition-colors">Rewrite</button>
+      </div>
+    </main>
+
+    <aside class="p-5 overflow-y-auto">
+      <h2 class="text-sm font-semibold text-zinc-300 mb-4">Audience Twin</h2>
+      <div id="twinCard" class="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 mb-4">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-600 text-lg">?</div>
+          <div>
+            <p class="text-sm font-medium text-zinc-400">No twin yet</p>
+            <p class="text-xs text-zinc-600">Generate to create persona</p>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex justify-between text-xs"><span class="text-zinc-500">Skepticism</span><span class="text-zinc-600">--</span></div>
+          <div class="w-full h-1.5 rounded-full bg-zinc-800"></div>
+        </div>
+      </div>
+      <h3 class="text-xs font-semibold text-zinc-400 mb-3 uppercase tracking-wide">Reactions</h3>
+      <div id="reactionsArea">
+        <div class="space-y-2">
+          <div class="rounded-md border border-zinc-800 bg-zinc-900/30 p-3 flex items-start gap-2"><div class="w-5 h-5 rounded-full bg-zinc-800 mt-0.5 flex-shrink-0"></div><div class="flex-1"><div class="h-3 w-3/4 bg-zinc-800 rounded mb-1.5"></div><div class="h-2 w-1/2 bg-zinc-800/50 rounded"></div></div></div>
+          <div class="rounded-md border border-zinc-800 bg-zinc-900/30 p-3 flex items-start gap-2"><div class="w-5 h-5 rounded-full bg-zinc-800 mt-0.5 flex-shrink-0"></div><div class="flex-1"><div class="h-3 w-3/4 bg-zinc-800 rounded mb-1.5"></div><div class="h-2 w-1/2 bg-zinc-800/50 rounded"></div></div></div>
+          <div class="rounded-md border border-zinc-800 bg-zinc-900/30 p-3 flex items-start gap-2"><div class="w-5 h-5 rounded-full bg-zinc-800 mt-0.5 flex-shrink-0"></div><div class="flex-1"><div class="h-3 w-3/4 bg-zinc-800 rounded mb-1.5"></div><div class="h-2 w-1/2 bg-zinc-800/50 rounded"></div></div></div>
+          <p class="text-xs text-zinc-600 text-center pt-2">Feedback will appear after generation</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    let state = {
+      twin: null,
+      copies: null,
+      reactions: [],
+      product: { url: "", description: "" },
+    };
+    let activeTab = "linkedin";
+    let generated = false;
+
+    const urlInput = document.getElementById('url');
+    const descInput = document.getElementById('desc');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusCard = document.getElementById('statusCard');
+    const contentArea = document.getElementById('contentArea');
+    const twinCard = document.getElementById('twinCard');
+    const reactionsArea = document.getElementById('reactionsArea');
+    const scoreBar = document.getElementById('scoreBar');
+    const scoreText = document.getElementById('scoreText');
+
+    function updateBtn() {
+      const hasInput = urlInput.value.trim() || descInput.value.trim();
+      submitBtn.disabled = !hasInput;
+      if (hasInput) {
+        submitBtn.className = 'w-full py-2.5 text-sm font-semibold rounded-md bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition-colors';
+      } else {
+        submitBtn.className = 'w-full py-2.5 text-sm font-semibold rounded-md bg-zinc-800 text-zinc-500 cursor-not-allowed transition-colors';
+      }
+    }
+    urlInput.addEventListener('input', updateBtn);
+    descInput.addEventListener('input', updateBtn);
+    descInput.addEventListener('change', updateBtn);
+    descInput.addEventListener('keyup', updateBtn);
+    setTimeout(updateBtn, 100);
+
+    document.getElementById('tabs').addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-tab]');
+      if (!btn) return;
+      activeTab = btn.dataset.tab;
+      document.querySelectorAll('#tabs button').forEach(b => {
+        const isActive = b.dataset.tab === activeTab;
+        b.className = isActive
+          ? 'flex-1 py-3 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400 relative'
+          : 'flex-1 py-3 text-sm font-medium text-zinc-500 hover:text-zinc-300 relative';
+        const scoreEl = b.querySelector('.tab-score');
+        if (scoreEl && !scoreEl.classList.contains('hidden')) {
+          scoreEl.className = 'tab-score text-[10px] ' + (isActive ? 'text-emerald-300' : 'text-zinc-500');
+        }
+      });
+      if (generated) renderContent();
+    });
+
+    function getBestChannel() {
+      let best = null;
+      for (const r of state.reactions) {
+        if (!best || r.scores.overall > best.scores.overall) best = r;
+      }
+      return best;
+    }
+
+    function showToast(msg, kind) {
+      let toast = document.getElementById('toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        document.body.appendChild(toast);
+      }
+      const color = kind === 'error'
+        ? 'bg-red-950 border-red-800 text-red-200'
+        : 'bg-zinc-800 border-zinc-700 text-zinc-200';
+      toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg border text-sm shadow-lg ' + color;
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => { toast.style.display = 'none'; }, kind === 'error' ? 5000 : 2500);
+    }
+
+    function handleCopy() {
+      const copy = getCopyText(activeTab);
+      if (!copy) return;
+      navigator.clipboard.writeText(copy).then(() => {
+        const names = {linkedin:'LinkedIn',x:'X',product_hunt:'Product Hunt',landing:'Landing'};
+        showToast((names[activeTab] || activeTab) + ' copy copied to clipboard!');
+      });
+    }
+    window.handleCopy = handleCopy;
+
+    document.getElementById('exportBtn').addEventListener('click', function() {
+      if (!generated) return;
+      const exportData = { product: state.product, copies: state.copies, twin: state.twin, reactions: state.reactions, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'echolaunch-kit.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Launch kit exported as JSON!');
+    });
+
+    document.getElementById('rewriteBtn').addEventListener('click', async function() {
+      if (this.disabled || !generated) return;
+      const rwBtn = this;
+      const reaction = getReaction(activeTab);
+      if (!reaction) return;
+
+      rwBtn.disabled = true;
+      rwBtn.innerHTML = '<span class="inline-flex items-center gap-1.5"><svg class="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Rewriting...</span>';
+      rwBtn.className = 'px-4 py-1.5 text-xs font-medium rounded-md bg-zinc-800 text-zinc-500 cursor-not-allowed transition-colors';
+
+      try {
+        const resp = await fetch('/api/rewrite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channel: activeTab,
+            currentCopy: getCurrentCopyObject(activeTab),
+            objections: reaction.objections,
+            strongest_hook: reaction.strongest_hook,
+            weakest_line: reaction.weakest_line,
+            previous_overall: reaction.scores.overall,
+            twin: state.twin,
+            product: state.product,
+          }),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(()=>({error:'Rewrite failed'}));
+          throw new Error(err.error || ('HTTP ' + resp.status));
+        }
+        const data = await resp.json();
+        applyRewrite(activeTab, data.copy, data.reaction);
+        renderContent();
+        showRecommendations();
+        const names = {linkedin:'LinkedIn',x:'X',product_hunt:'Product Hunt',landing:'Landing'};
+        showToast((names[activeTab] || activeTab) + ' rewritten — score: ' + data.reaction.scores.overall + '/100');
+      } catch (err) {
+        console.error(err);
+        showToast('Rewrite failed: ' + err.message, 'error');
+      } finally {
+        rwBtn.disabled = false;
+        rwBtn.innerHTML = 'Rewrite';
+        rwBtn.className = 'px-4 py-1.5 text-xs font-medium rounded-md bg-amber-500 hover:bg-amber-400 text-zinc-950 transition-colors cursor-pointer';
+      }
+    });
+
+    function getCurrentCopyObject(tab) {
+      switch(tab) {
+        case 'linkedin': return state.copies.linkedin;
+        case 'x': return state.copies.x_thread;
+        case 'product_hunt': return state.copies.product_hunt;
+        case 'landing': return state.copies.landing;
+      }
+    }
+
+    function applyRewrite(tab, copy, reaction) {
+      if (tab === 'linkedin') state.copies.linkedin = String(copy || '');
+      else if (tab === 'x') state.copies.x_thread = Array.isArray(copy) ? copy.map(String) : state.copies.x_thread;
+      else if (tab === 'product_hunt') state.copies.product_hunt = copy || state.copies.product_hunt;
+      else if (tab === 'landing') state.copies.landing = copy || state.copies.landing;
+      const idx = state.reactions.findIndex(r => r.channel === tab);
+      if (idx >= 0) state.reactions[idx] = reaction;
+    }
+
+    function showRecommendations() {
+      const best = getBestChannel();
+      if (!best) return;
+      const channelNames = {linkedin:'LinkedIn',x:'X',product_hunt:'Product Hunt',landing:'Landing'};
+      const banner = document.getElementById('recBanner');
+      banner.classList.remove('hidden');
+      banner.classList.add('flex');
+      document.getElementById('recText').innerHTML = 'Best performing: <strong>' + channelNames[best.channel] + '</strong> (score: ' + best.scores.overall + '/100)';
+      document.querySelectorAll('#tabs button').forEach(b => {
+        const tab = b.dataset.tab;
+        const reaction = state.reactions.find(r => r.channel === tab);
+        const scoreEl = b.querySelector('.tab-score');
+        if (reaction && scoreEl) {
+          scoreEl.textContent = reaction.scores.overall;
+          scoreEl.classList.remove('hidden');
+        }
+        const existingBadge = b.querySelector('.best-badge');
+        if (existingBadge) existingBadge.remove();
+        if (reaction && reaction.channel === best.channel) {
+          const badge = document.createElement('span');
+          badge.className = 'best-badge absolute -top-1 right-2 text-[9px] bg-emerald-500 text-zinc-950 px-1.5 py-0.5 rounded-full font-bold';
+          badge.textContent = 'BEST';
+          b.appendChild(badge);
+        }
+      });
+    }
+
+    function getCopyText(tab) {
+      if (!state.copies) return '';
+      switch(tab) {
+        case 'linkedin': return state.copies.linkedin || '';
+        case 'x': return (state.copies.x_thread || []).map((t,i)=>`${i+1}. ${t}`).join('\n\n');
+        case 'product_hunt': return (state.copies.product_hunt?.tagline || '') + '\n\n' + (state.copies.product_hunt?.description || '');
+        case 'landing': return `Headline: ${state.copies.landing?.headline || ''}\nSubheadline: ${state.copies.landing?.subheadline || ''}\nCTA: ${state.copies.landing?.cta || ''}`;
+      }
+      return '';
+    }
+
+    function getReaction(tab) {
+      return state.reactions.find(r => r.channel === tab);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderContent() {
+      const reaction = getReaction(activeTab);
+      const copy = getCopyText(activeTab);
+
+      contentArea.innerHTML = `
+        <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 p-5">
+          <div class="flex justify-end mb-3">
+            <button onclick="handleCopy()" class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre class="whitespace-pre-wrap text-sm text-zinc-200 font-sans leading-relaxed">${escapeHtml(copy)}</pre>
+          ${reaction ? `
+            <div class="mt-4 pt-4 border-t border-zinc-800">
+              <p class="text-xs font-medium text-emerald-400 mb-2">Strongest hook:</p>
+              <p class="text-xs text-zinc-300 italic">&ldquo;${escapeHtml(reaction.strongest_hook)}&rdquo;</p>
+              <p class="text-xs font-medium text-red-400 mb-2 mt-3">Weakest line:</p>
+              <p class="text-xs text-zinc-300 italic">&ldquo;${escapeHtml(reaction.weakest_line)}&rdquo;</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      if (reaction) {
+        scoreBar.style.width = reaction.scores.overall + '%';
+        scoreBar.style.backgroundColor = reaction.scores.overall >= 70 ? '#10b981' : reaction.scores.overall >= 40 ? '#f59e0b' : '#ef4444';
+        scoreText.textContent = reaction.scores.overall + '/100';
+        scoreText.className = 'text-xs ' + (reaction.scores.overall >= 70 ? 'text-emerald-400' : reaction.scores.overall >= 40 ? 'text-amber-400' : 'text-red-400');
+
+        const scoreColor = (v) => v >= 70 ? '#10b981' : v >= 40 ? '#f59e0b' : '#ef4444';
+        reactionsArea.innerHTML = `
+          <div class="space-y-2">
+            ${reaction.objections.map(obj => `
+              <div class="rounded-md border border-zinc-800 bg-zinc-900/30 p-3 flex items-start gap-2">
+                <div class="w-5 h-5 rounded-full bg-red-900/50 mt-0.5 flex-shrink-0 flex items-center justify-center">
+                  <span class="text-red-400 text-xs">!</span>
+                </div>
+                <p class="text-xs text-zinc-300 leading-relaxed">${escapeHtml(obj)}</p>
+              </div>
+            `).join('')}
+            <div class="mt-3 rounded-md border border-zinc-800 bg-zinc-900/30 p-3 space-y-2">
+              <p class="text-xs font-medium text-zinc-400 mb-2">Score Breakdown</p>
+              ${Object.entries(reaction.scores).filter(([k])=>k!=='overall').map(([key, val]) => `
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-zinc-500 w-20 capitalize">${key}</span>
+                  <div class="flex-1 h-1.5 rounded-full bg-zinc-800"><div class="h-1.5 rounded-full" style="width:${val}%;background-color:${scoreColor(val)}"></div></div>
+                  <span class="text-xs text-zinc-400 w-6 text-right">${val}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function renderTwin() {
+      const t = state.twin;
+      if (!t) return;
+      twinCard.innerHTML = `
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center text-emerald-400 text-sm font-bold">${escapeHtml(t.name.split(' ').map(n=>n[0]||'').join('').slice(0,2))}</div>
+          <div>
+            <p class="text-sm font-medium text-zinc-200">${escapeHtml(t.name)}</p>
+            <p class="text-xs text-zinc-400">${escapeHtml(t.role)}</p>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-zinc-500">Skepticism</span><span class="text-zinc-300">${t.skepticism_level}/10</span></div>
+            <div class="w-full h-1.5 rounded-full bg-zinc-800"><div class="h-1.5 rounded-full bg-orange-500" style="width:${t.skepticism_level*10}%"></div></div>
+          </div>
+          <div>
+            <p class="text-xs text-zinc-500 mb-1">Pain Points</p>
+            <ul class="space-y-1">${t.pain_points.map(p=>`<li class="text-xs text-zinc-300 flex gap-1.5"><span class="text-red-400 mt-0.5">&#8226;</span>${escapeHtml(p)}</li>`).join('')}</ul>
+          </div>
+          <div>
+            <p class="text-xs text-zinc-500 mb-1">Convinced by</p>
+            <p class="text-xs text-zinc-300">${escapeHtml(t.what_convinces_them)}</p>
+          </div>
+          <div>
+            <p class="text-xs text-zinc-500 mb-1">Turned off by</p>
+            <p class="text-xs text-zinc-300">${escapeHtml(t.what_turns_them_off)}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function setStatus(msg, kind) {
+      statusCard.classList.remove('hidden');
+      if (kind === 'error') {
+        statusCard.innerHTML = `<div class="rounded-md border border-red-900 bg-red-950/30 p-3"><p class="text-xs text-red-300">${escapeHtml(msg)}</p></div>`;
+      } else if (kind === 'done') {
+        statusCard.innerHTML = `<div class="rounded-md border border-zinc-800 bg-zinc-900/30 p-3"><p class="text-xs text-emerald-400 font-medium">${escapeHtml(msg)}</p></div>`;
+      } else {
+        statusCard.innerHTML = `<div class="rounded-md border border-zinc-800 bg-zinc-900/30 p-3"><div class="flex items-center gap-2"><svg class="animate-spin h-3 w-3 text-emerald-400" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><p class="text-xs text-emerald-400">${escapeHtml(msg)}</p></div></div>`;
+      }
+    }
+
+    submitBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      if (submitBtn.disabled) return;
+
+      const url = urlInput.value.trim();
+      const description = descInput.value.trim();
+      if (!url && !description) return;
+
+      state.product = { url, description };
+      submitBtn.disabled = true;
+      submitBtn.className = 'w-full py-2.5 text-sm font-semibold rounded-md bg-zinc-800 text-zinc-500 cursor-not-allowed transition-colors';
+      submitBtn.textContent = 'Generating...';
+
+      const steps = ['Building audience twin...', 'Generating launch copy...', 'Simulating audience reactions...'];
+      let stepIdx = 0;
+      setStatus(steps[0]);
+      const ticker = setInterval(() => {
+        stepIdx = Math.min(stepIdx + 1, steps.length - 1);
+        setStatus(steps[stepIdx]);
+      }, 4500);
+
+      try {
+        const resp = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, description }),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(()=>({error:'Generation failed'}));
+          throw new Error(err.error || ('HTTP ' + resp.status));
+        }
+        const data = await resp.json();
+        state.twin = data.twin;
+        state.copies = data.copies;
+        state.reactions = data.reactions;
+        generated = true;
+
+        clearInterval(ticker);
+        setStatus('Generation complete', 'done');
+        renderTwin();
+        renderContent();
+        showRecommendations();
+
+        const expBtn = document.getElementById('exportBtn');
+        expBtn.disabled = false;
+        expBtn.className = 'px-3 py-1.5 text-xs font-medium rounded-md bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors cursor-pointer';
+        const rwBtn = document.getElementById('rewriteBtn');
+        rwBtn.disabled = false;
+        rwBtn.className = 'px-4 py-1.5 text-xs font-medium rounded-md bg-amber-500 hover:bg-amber-400 text-zinc-950 transition-colors cursor-pointer';
+      } catch (err) {
+        console.error(err);
+        clearInterval(ticker);
+        setStatus('Generation failed: ' + err.message, 'error');
+        showToast('Generation failed: ' + err.message, 'error');
+      } finally {
+        submitBtn.textContent = 'Generate Launch Kit';
+        updateBtn();
+      }
+    });
+  </script>
+</body>
+</html>

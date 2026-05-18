@@ -1,0 +1,9 @@
+{
+  "name": "echolaunch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EchoLaunch — Generate launch copy, simulate your audience, ship what lands.",
+  "dependencies": {
+    "openai": "^4.77.0"
+  }
+}
